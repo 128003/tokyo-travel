@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>東京五月 · 旅遊紀錄</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600&family=Noto+Sans+TC:wght@300;400;500&family=Space+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sakura: #F2A8B8; --sakura-light: #FDF0F3; --sakura-dark: #C4607A;
+    --ink: #1A1A2E; --ink-soft: #3D3D5C; --mist: #8B8FAD;
+    --paper: #FAFAF7; --paper-warm: #F5F0E8;
+    --gold: #C9A84C; --gold-light: #F5EDD4;
+    --teal: #2A7E8E; --teal-light: #E0F4F6;
+    --font-serif: 'Noto Serif TC', serif;
+    --font-sans: 'Noto Sans TC', sans-serif;
+    --font-mono: 'Space Mono', monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--paper); color: var(--ink); font-family: var(--font-sans); font-weight: 300; min-height: 100vh; overflow-x: hidden; }
+
+  /* ── Hero ── */
+  .hero { position: relative; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2rem; background: var(--ink); overflow: hidden; }
+  .hero-bg { position: absolute; inset: 0; background: radial-gradient(ellipse 80% 60% at 50% 100%, rgba(242,168,184,0.18) 0%, transparent 70%), radial-gradient(ellipse 50% 40% at 80% 20%, rgba(201,168,76,0.10) 0%, transparent 60%); }
+  .petal { position: absolute; pointer-events: none; opacity: 0; animation: fall linear infinite; }
+  .petal::before { content: ''; display: block; width: 8px; height: 10px; background: var(--sakura); border-radius: 50% 50% 50% 0; transform: rotate(-45deg); opacity: 0.6; }
+  @keyframes fall { 0% { transform: translateY(-20px) translateX(0) rotate(0deg); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 0.5; } 100% { transform: translateY(100vh) translateX(60px) rotate(360deg); opacity: 0; } }
+  .hero-date { font-family: var(--font-mono); font-size: clamp(0.65rem, 2vw, 0.8rem); letter-spacing: 0.3em; color: var(--sakura); margin-bottom: 1.5rem; position: relative; z-index: 1; }
+  .hero-title { font-family: var(--font-serif); font-size: clamp(2.8rem, 10vw, 6rem); font-weight: 600; color: #fff; line-height: 1.1; position: relative; z-index: 1; letter-spacing: -0.02em; }
+  .hero-title span { display: block; font-family: var(--font-mono); font-size: clamp(0.8rem, 2.5vw, 1rem); color: var(--gold); font-weight: 400; letter-spacing: 0.25em; margin-top: 1rem; }
+  .hero-subtitle { font-size: clamp(0.8rem, 2vw, 0.95rem); color: var(--mist); margin-top: 0.5rem; position: relative; z-index: 1; }
+  .scroll-hint { position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 1; animation: bounce 2s ease-in-out infinite; }
+  .scroll-hint span { font-size: 0.7rem; letter-spacing: 0.2em; color: var(--mist); }
+  .scroll-hint-line { width: 1px; height: 40px; background: linear-gradient(to bottom, var(--mist), transparent); }
+  @keyframes bounce { 0%,100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(8px); } }
+
+  /* ── Day nav ── */
+  .day-nav { position: sticky; top: 0; z-index: 100; background: rgba(250,250,247,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(26,26,46,0.08); padding: 0 1rem; display: flex; justify-content: center; overflow-x: auto; scrollbar-width: none; }
+  .day-nav::-webkit-scrollbar { display: none; }
+  .day-nav-inner { display: flex; gap: 0; min-width: max-content; }
+  .day-tab { padding: 0.9rem 1.2rem; font-size: 0.78rem; font-weight: 400; color: var(--mist); cursor: pointer; border: none; background: none; font-family: var(--font-sans); letter-spacing: 0.05em; transition: color 0.2s; position: relative; white-space: nowrap; }
+  .day-tab::after { content: ''; position: absolute; bottom: 0; left: 20%; right: 20%; height: 2px; background: var(--sakura-dark); transform: scaleX(0); transition: transform 0.3s ease; }
+  .day-tab.active { color: var(--ink); font-weight: 500; }
+  .day-tab.active::after { transform: scaleX(1); }
+  .day-tab:hover { color: var(--ink-soft); }
+
+  /* ── Main ── */
+  .main { max-width: 780px; margin: 0 auto; padding: 3rem 1.5rem 8rem; }
+  .day-section { margin-bottom: 4rem; opacity: 0; transform: translateY(20px); transition: opacity 0.5s ease, transform 0.5s ease; }
+  .day-section.visible { opacity: 1; transform: translateY(0); }
+  .day-header { display: flex; align-items: baseline; gap: 1rem; margin-bottom: 2.5rem; padding-bottom: 1rem; border-bottom: 1px solid rgba(26,26,46,0.08); }
+  .day-number { font-family: var(--font-mono); font-size: 3rem; color: rgba(26,26,46,0.08); line-height: 1; font-weight: 400; letter-spacing: -0.05em; }
+  .day-info { flex: 1; }
+  .day-label { font-family: var(--font-serif); font-size: 1.3rem; color: var(--ink); font-weight: 600; }
+  .day-date-label { font-family: var(--font-mono); font-size: 0.7rem; color: var(--mist); letter-spacing: 0.1em; margin-top: 2px; }
+
+  /* ── Timeline ── */
+  .timeline { position: relative; padding-left: 2rem; }
+  .timeline::before { content: ''; position: absolute; left: 5px; top: 0; bottom: 0; width: 1px; background: linear-gradient(to bottom, var(--sakura), rgba(242,168,184,0.1)); }
+
+  /* ── Spot card ── */
+  .spot-card { position: relative; margin-bottom: 2rem; opacity: 0; transform: translateX(-12px); transition: opacity 0.4s ease, transform 0.4s ease; }
+  .spot-card.visible { opacity: 1; transform: translateX(0); }
+  .spot-dot { position: absolute; left: -2rem; top: 0.9rem; width: 10px; height: 10px; border-radius: 50%; background: var(--sakura); border: 2px solid var(--paper); box-shadow: 0 0 0 2px var(--sakura); }
+  .spot-dot.featured { background: var(--gold); box-shadow: 0 0 0 2px var(--gold); }
+  .spot-inner { background: #fff; border: 1px solid rgba(26,26,46,0.07); border-radius: 16px; overflow: hidden; transition: box-shadow 0.25s ease, transform 0.25s ease; }
+  .spot-inner:hover { box-shadow: 0 8px 32px rgba(26,26,46,0.08); transform: translateY(-2px); }
+  .spot-image-wrap { position: relative; width: 100%; padding-top: 52%; background: var(--paper-warm); overflow: hidden; }
+  .spot-image-wrap img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+  .spot-inner:hover .spot-image-wrap img { transform: scale(1.03); }
+  .spot-image-placeholder { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--mist); font-size: 0.75rem; letter-spacing: 0.1em; }
+  .spot-image-placeholder svg { opacity: 0.3; }
+  .spot-tag { position: absolute; top: 12px; right: 12px; background: rgba(26,26,46,0.75); color: #fff; font-size: 0.65rem; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.08em; backdrop-filter: blur(4px); }
+  .spot-body { padding: 1.1rem 1.25rem 1.25rem; }
+  .spot-meta { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.6rem; flex-wrap: wrap; }
+  .spot-time { font-family: var(--font-mono); font-size: 0.7rem; color: var(--mist); letter-spacing: 0.05em; }
+  .gps-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 0.65rem; color: var(--teal); background: var(--teal-light); padding: 2px 8px; border-radius: 12px; font-family: var(--font-mono); }
+  .spot-name { font-family: var(--font-serif); font-size: 1.1rem; font-weight: 600; color: var(--ink); margin-bottom: 0.4rem; text-decoration: none; display: block; transition: color 0.2s; }
+  a.spot-name:hover { color: var(--teal); }
+  .spot-note { font-size: 0.85rem; color: var(--ink-soft); line-height: 1.75; font-weight: 300; white-space: pre-wrap; }
+  .spot-note:empty::before { content: '旅途中更新...'; color: var(--mist); font-style: italic; }
+  .spot-footer { display: flex; align-items: center; gap: 4px; padding: 0.7rem 1rem; border-top: 1px solid rgba(26,26,46,0.05); background: var(--paper); flex-wrap: wrap; }
+  .map-btn { display: inline-flex; align-items: center; gap: 5px; font-size: 0.72rem; color: var(--teal); padding: 5px 10px; border-radius: 6px; transition: background 0.2s; font-weight: 500; cursor: pointer; border: none; background: none; font-family: var(--font-sans); text-decoration: none; }
+  .map-btn:hover { background: var(--teal-light); }
+  .map-embed-wrap { width: 100%; max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
+  .map-embed-wrap.open { max-height: 280px; }
+  .map-embed-wrap iframe { width: 100%; height: 260px; border: none; display: block; }
+
+  /* ── Coming card ── */
+  .coming-card { border: 1px dashed rgba(26,26,46,0.15); border-radius: 16px; padding: 2rem; text-align: center; color: var(--mist); font-size: 0.8rem; letter-spacing: 0.05em; margin-bottom: 2rem; }
+  .coming-card .coming-icon { display: block; font-size: 1.5rem; margin-bottom: 8px; opacity: 0.4; }
+
+  /* ── Add spot inline button ── */
+  .add-spot-btn { display: flex; align-items: center; gap: 10px; width: 100%; padding: 0.85rem 1.25rem; background: none; border: 1px dashed rgba(242,168,184,0.55); border-radius: 14px; cursor: pointer; color: var(--mist); font-family: var(--font-sans); font-size: 0.82rem; transition: all 0.2s; margin-top: 0.25rem; }
+  .add-spot-btn:hover { border-color: var(--sakura-dark); color: var(--sakura-dark); background: var(--sakura-light); }
+  .plus-circle { width: 26px; height: 26px; border-radius: 50%; background: rgba(242,168,184,0.45); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.2s; }
+  .add-spot-btn:hover .plus-circle { background: var(--sakura-dark); color: #fff; }
+
+  /* ── FAB ── */
+  .fab { position: fixed; bottom: 2rem; right: 1.5rem; z-index: 200; width: 56px; height: 56px; border-radius: 50%; background: var(--ink); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 20px rgba(26,26,46,0.35); transition: transform 0.2s, box-shadow 0.2s; }
+  .fab:hover { transform: scale(1.1); box-shadow: 0 6px 28px rgba(26,26,46,0.45); }
+  .fab svg { color: #fff; transition: transform 0.3s ease; }
+  .fab.open svg { transform: rotate(45deg); }
+
+  /* ── Modal ── */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(26,26,46,0.5); backdrop-filter: blur(4px); z-index: 300; display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal-sheet { background: var(--paper); border-radius: 24px 24px 0 0; width: 100%; max-width: 780px; max-height: 92vh; overflow-y: auto; transform: translateY(50px); transition: transform 0.35s cubic-bezier(0.34,1.4,0.64,1); }
+  .modal-overlay.open .modal-sheet { transform: translateY(0); }
+  .modal-handle { width: 36px; height: 4px; background: rgba(26,26,46,0.15); border-radius: 2px; margin: 14px auto 0; }
+  .modal-header { padding: 1.25rem 1.5rem 0.75rem; border-bottom: 1px solid rgba(26,26,46,0.07); display: flex; align-items: center; justify-content: space-between; }
+  .modal-title { font-family: var(--font-serif); font-size: 1.1rem; font-weight: 600; }
+  .modal-close { width: 32px; height: 32px; border-radius: 50%; border: none; background: rgba(26,26,46,0.06); cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--ink-soft); font-size: 1rem; transition: background 0.2s; }
+  .modal-close:hover { background: rgba(26,26,46,0.12); }
+  .modal-body { padding: 1.25rem 1.5rem 2.5rem; }
+
+  /* ── Form ── */
+  .form-row { margin-bottom: 1.1rem; }
+  .form-row label { display: block; font-size: 0.75rem; font-weight: 500; color: var(--mist); letter-spacing: 0.08em; margin-bottom: 6px; }
+  .form-row input, .form-row textarea, .form-row select { width: 100%; padding: 0.7rem 0.9rem; border: 1px solid rgba(26,26,46,0.15); border-radius: 10px; font-family: var(--font-sans); font-size: 0.9rem; color: var(--ink); background: #fff; outline: none; transition: border-color 0.2s; -webkit-appearance: none; }
+  .form-row input:focus, .form-row textarea:focus, .form-row select:focus { border-color: var(--sakura-dark); }
+  .form-row textarea { resize: vertical; min-height: 88px; line-height: 1.65; }
+  .form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+  /* ── GPS panel ── */
+  .gps-panel { background: var(--teal-light); border-radius: 12px; padding: 1rem 1.1rem; margin-bottom: 1.1rem; }
+  .gps-row { display: flex; align-items: center; gap: 10px; }
+  .gps-status-text { flex: 1; font-size: 0.82rem; color: var(--teal); min-width: 0; }
+  .gps-status-text.error { color: #B03A2E; }
+  .gps-status-text.loading { color: var(--mist); }
+  .gps-locate-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: 8px; border: 1px solid var(--teal); background: #fff; color: var(--teal); font-size: 0.77rem; font-family: var(--font-sans); font-weight: 500; cursor: pointer; transition: all 0.2s; white-space: nowrap; flex-shrink: 0; }
+  .gps-locate-btn:hover { background: var(--teal); color: #fff; }
+  .gps-locate-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .gps-coords-line { font-family: var(--font-mono); font-size: 0.68rem; color: var(--teal); margin-top: 7px; display: none; }
+  .gps-map-mini { margin-top: 10px; border-radius: 10px; overflow: hidden; height: 0; transition: height 0.35s ease; }
+  .gps-map-mini.visible { height: 160px; }
+  .gps-map-mini iframe { width: 100%; height: 160px; border: none; display: block; }
+
+  /* ── Image upload ── */
+  .img-drop { border: 1px dashed rgba(26,26,46,0.2); border-radius: 10px; padding: 1.25rem; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; }
+  .img-drop:hover { border-color: var(--sakura-dark); background: var(--sakura-light); }
+  .img-drop input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .img-drop p { font-size: 0.8rem; color: var(--mist); pointer-events: none; }
+  .img-preview-box { max-width: 100%; max-height: 140px; border-radius: 8px; margin-top: 8px; display: none; object-fit: contain; }
+
+  /* ── Tag chips ── */
+  .tag-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag-chip { padding: 5px 14px; border-radius: 20px; border: 1px solid rgba(26,26,46,0.14); font-size: 0.75rem; cursor: pointer; background: #fff; color: var(--ink-soft); transition: all 0.18s; user-select: none; }
+  .tag-chip.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+  /* ── Checkbox row ── */
+  .check-row { display: flex; align-items: center; gap: 10px; margin-bottom: 1.25rem; }
+  .check-row input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--gold); flex-shrink: 0; cursor: pointer; }
+  .check-row label { font-size: 0.82rem; color: var(--ink-soft); cursor: pointer; }
+
+  /* ── Submit ── */
+  .submit-btn { width: 100%; padding: 0.95rem; background: var(--ink); color: #fff; border: none; border-radius: 12px; font-family: var(--font-serif); font-size: 1rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s, transform 0.15s; letter-spacing: 0.03em; }
+  .submit-btn:hover { opacity: 0.85; }
+  .submit-btn:active { transform: scale(0.98); }
+
+  /* ── Toast ── */
+  .toast { position: fixed; bottom: 5.5rem; left: 50%; transform: translateX(-50%) translateY(16px); background: var(--ink); color: #fff; padding: 0.65rem 1.5rem; border-radius: 24px; font-size: 0.82rem; z-index: 500; opacity: 0; transition: opacity 0.3s, transform 0.3s; pointer-events: none; white-space: nowrap; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  #loading { text-align: center; padding: 5rem 2rem; color: var(--mist); font-size: 0.85rem; letter-spacing: 0.1em; }
+  #error-msg { background: #FFF5F5; border: 1px solid #FFCCCC; border-radius: 12px; padding: 1.5rem; margin: 2rem 0; font-size: 0.85rem; color: #C0392B; display: none; }
+  footer { text-align: center; padding: 2rem; font-size: 0.7rem; color: var(--mist); letter-spacing: 0.1em; border-top: 1px solid rgba(26,26,46,0.06); }
+
+  @media (max-width: 600px) {
+    .main { padding: 2rem 1rem 8rem; }
+    .day-number { font-size: 2rem; }
+    .timeline { padding-left: 1.5rem; }
+    .spot-dot { left: -1.5rem; }
+    .form-2col { grid-template-columns: 1fr; }
+    .modal-sheet { max-height: 95vh; }
+  }
+</style>
+</head>
+<body>
+
+<section class="hero">
+  <div class="hero-bg"></div>
+  <p class="hero-date">MAY 2025 · TOKYO · 七日紀行</p>
+  <h1 class="hero-title">東京<br>旅遊紀錄<span>5.07 → 5.13</span></h1>
+  <p class="hero-subtitle">用時間軸紀錄每一個難忘的瞬間</p>
+  <div class="scroll-hint"><span>SCROLL</span><div class="scroll-hint-line"></div></div>
+</section>
+
+<nav class="day-nav"><div class="day-nav-inner" id="day-tabs"></div></nav>
+
+<main class="main">
+  <div id="loading">正在載入旅遊紀錄...</div>
+  <div id="error-msg"></div>
+  <div id="timeline-root"></div>
+</main>
+
+<footer>✦ 東京旅遊紀錄 · 2025 ✦</footer>
+
+<!-- FAB -->
+<button class="fab" id="fab-btn" title="新增行程">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+  </svg>
+</button>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-title">✦ 新增旅遊紀錄</span>
+      <button class="modal-close" id="modal-close">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="form-2col">
+        <div class="form-row">
+          <label>第幾天</label>
+          <select id="f-day">
+            <option value="1">Day 1 · 5/7 Wed</option>
+            <option value="2">Day 2 · 5/8 Thu</option>
+            <option value="3">Day 3 · 5/9 Fri</option>
+            <option value="4">Day 4 · 5/10 Sat</option>
+            <option value="5">Day 5 · 5/11 Sun</option>
+            <option value="6">Day 6 · 5/12 Mon</option>
+            <option value="7">Day 7 · 5/13 Tue</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>時間</label>
+          <input type="time" id="f-time">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label>景點名稱</label>
+        <input type="text" id="f-name" placeholder="例：淺草寺、新宿御苑、涉谷...">
+      </div>
+
+      <!-- GPS Panel -->
+      <div class="gps-panel">
+        <div class="gps-row">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2A7E8E" stroke-width="2" style="flex-shrink:0">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+          </svg>
+          <span class="gps-status-text" id="gps-status">點擊按鈕取得你目前的 GPS 位置</span>
+          <button class="gps-locate-btn" id="gps-btn">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+            </svg>
+            定位我的位置
+          </button>
+        </div>
+        <div class="gps-coords-line" id="gps-coords"></div>
+        <div class="gps-map-mini" id="gps-map-mini">
+          <iframe id="gps-iframe" src="" allowfullscreen loading="lazy"></iframe>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label>旅遊筆記</label>
+        <textarea id="f-note" placeholder="記錄這個瞬間的感受、味道、風景..."></textarea>
+      </div>
+
+      <div class="form-row">
+        <label>照片（選填）</label>
+        <div class="img-drop" id="img-drop-area">
+          <input type="file" id="f-image-file" accept="image/*">
+          <p>📷 點擊或拖曳上傳照片</p>
+          <img class="img-preview-box" id="img-preview" src="" alt="預覽">
+        </div>
+        <input type="text" id="f-image-url" placeholder="或貼上圖片網址（Imgur / Google Photos）" style="margin-top:8px">
+      </div>
+
+      <div class="form-row">
+        <label>標籤</label>
+        <div class="tag-chips" id="tag-chips">
+          <span class="tag-chip" data-tag="美食">美食</span>
+          <span class="tag-chip" data-tag="寺廟">寺廟</span>
+          <span class="tag-chip" data-tag="購物">購物</span>
+          <span class="tag-chip" data-tag="地標">地標</span>
+          <span class="tag-chip" data-tag="自然">自然</span>
+          <span class="tag-chip" data-tag="夜景">夜景</span>
+          <span class="tag-chip" data-tag="交通">交通</span>
+          <span class="tag-chip" data-tag="住宿">住宿</span>
+          <span class="tag-chip" data-tag="其他">其他</span>
+        </div>
+      </div>
+
+      <div class="check-row">
+        <input type="checkbox" id="f-featured">
+        <label for="f-featured">✦ 標記為精選景點（時間軸顯示金色圓點）</label>
+      </div>
+
+      <button class="submit-btn" id="submit-btn">記錄這個瞬間 ✦</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════
+// Config
+// ═══════════════════════════════════════
+const CONFIG = { SHEET_ID:'YOUR_GOOGLE_SHEET_ID_HERE', SHEET_NAME:'Sheet1', USE_LOCAL:true };
+const DAY_DATES = {1:'5/7 Wed',2:'5/8 Thu',3:'5/9 Fri',4:'5/10 Sat',5:'5/11 Sun',6:'5/12 Mon',7:'5/13 Tue'};
+
+let _baseData = [];
+let _runtimeEntries = [];
+let _selectedTag = '';
+let _gpsLat = '', _gpsLng = '';
+
+// ═══════════════════════════════════════
+// Sample data
+// ═══════════════════════════════════════
+const SAMPLE_DATA = [
+  {day:1,date:'5/7 Wed',time:'14:00',spot_name:'淺草寺',note:'飛機降落後直奔淺草！仲見世通人潮洶湧，但一看到雷門大燈籠整個興奮起來 ✨',image_url:'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&q=80',maps_url:'https://maps.google.com/?q=淺草寺',tag:'寺廟',featured:true,lat:'35.7148',lng:'139.7967'},
+  {day:1,date:'5/7 Wed',time:'17:30',spot_name:'東京晴空塔',note:'塔下商店街逛了一圈，買了一堆伴手禮。傍晚天空很美，粉橘色漸層。',image_url:'https://images.unsplash.com/photo-1536098561742-ca998e48cbcc?w=800&q=80',maps_url:'https://maps.google.com/?q=東京晴空塔',tag:'地標',featured:false,lat:'35.7101',lng:'139.8107'},
+  {day:2,date:'5/8 Thu',time:'09:00',spot_name:'築地場外市場',note:'一大早來吃海鮮！鮪魚丼真的太鮮甜了，吃完整個人精神百倍。',image_url:'https://images.unsplash.com/photo-1611273426858-450d8e3c9fce?w=800&q=80',maps_url:'https://maps.google.com/?q=築地場外市場',tag:'美食',featured:true,lat:'35.6654',lng:'139.7706'},
+  {day:2,date:'5/8 Thu',time:'13:00',spot_name:'銀座',note:'',image_url:'',maps_url:'https://maps.google.com/?q=銀座東京',tag:'購物',featured:false,lat:'35.6717',lng:'139.7641'},
+  {day:3,date:'5/9 Fri', time:'',spot_name:'行程規劃中',note:'',image_url:'',maps_url:'',tag:'',featured:false,lat:'',lng:''},
+  {day:4,date:'5/10 Sat',time:'',spot_name:'行程規劃中',note:'',image_url:'',maps_url:'',tag:'',featured:false,lat:'',lng:''},
+  {day:5,date:'5/11 Sun',time:'',spot_name:'行程規劃中',note:'',image_url:'',maps_url:'',tag:'',featured:false,lat:'',lng:''},
+  {day:6,date:'5/12 Mon',time:'',spot_name:'行程規劃中',note:'',image_url:'',maps_url:'',tag:'',featured:false,lat:'',lng:''},
+  {day:7,date:'5/13 Tue',time:'',spot_name:'行程規劃中',note:'',image_url:'',maps_url:'',tag:'',featured:false,lat:'',lng:''},
+];
+
+// ═══════════════════════════════════════
+// Data helpers
+// ═══════════════════════════════════════
+async function loadData() {
+  if (CONFIG.USE_LOCAL || CONFIG.SHEET_ID==='YOUR_GOOGLE_SHEET_ID_HERE') return SAMPLE_DATA;
+  try {
+    const url=`https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(CONFIG.SHEET_NAME)}`;
+    const res=await fetch(url);
+    if (!res.ok) throw new Error('HTTP '+res.status);
+    return parseCSV(await res.text());
+  } catch(e) { showError('無法連線 Google Sheets，顯示範例資料。'); return SAMPLE_DATA; }
+}
+
+function parseCSV(csv) {
+  const lines=csv.trim().split('\n');
+  const headers=lines[0].replace(/"/g,'').split(',').map(h=>h.trim());
+  return lines.slice(1).map(line=>{
+    const vals=line.match(/(".*?"|[^,]+|(?<=,)(?=,)|^(?=,)|(?<=,)$)/g)||[];
+    const obj={};
+    headers.forEach((h,i)=>{obj[h]=(vals[i]||'').replace(/^"|"$/g,'').trim();});
+    obj.day=parseInt(obj.day)||1;
+    obj.featured=obj.featured==='true'||obj.featured==='TRUE';
+    return obj;
+  });
+}
+
+function allData() {
+  return [..._baseData,..._runtimeEntries].sort((a,b)=>{
+    if (a.day!==b.day) return a.day-b.day;
+    return (a.time||'99:99').localeCompare(b.time||'99:99');
+  });
+}
+
+function groupByDay(data) {
+  const d={};
+  data.forEach(item=>{if(!d[item.day])d[item.day]=[];d[item.day].push(item);});
+  return d;
+}
+
+// ═══════════════════════════════════════
+// Render
+// ═══════════════════════════════════════
+function makeEmbedUrl(lat,lng,name) {
+  if (lat&&lng) return `https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed`;
+  if (name) return `https://maps.google.com/maps?q=${encodeURIComponent(name+' Tokyo')}&z=15&output=embed`;
+  return null;
+}
+
+function makeMapsLink(lat,lng,name,fallback) {
+  if (fallback&&fallback.trim()) return fallback;
+  if (lat&&lng) return `https://maps.google.com/?q=${lat},${lng}`;
+  if (name) return `https://maps.google.com/?q=${encodeURIComponent(name+' Tokyo')}`;
+  return '#';
+}
+
+let _cardIdx = 0;
+
+function renderSpotCard(spot) {
+  const uid = 'c'+(++_cardIdx);
+  const hasImg = spot.image_url&&spot.image_url.trim();
+  const isPending = !spot.time && spot.spot_name==='行程規劃中';
+  if (isPending) return `<div class="coming-card"><span class="coming-icon">✦</span>旅途中更新...</div>`;
+
+  const hasCoords = spot.lat&&spot.lng;
+  const embedUrl = makeEmbedUrl(spot.lat, spot.lng, spot.spot_name);
+  const mapsLink = makeMapsLink(spot.lat, spot.lng, spot.spot_name, spot.maps_url);
+
+  return `<div class="spot-card" id="${uid}">
+    <div class="spot-dot${spot.featured?' featured':''}"></div>
+    <div class="spot-inner">
+      <div class="spot-image-wrap">
+        ${hasImg
+          ? `<img src="${spot.image_url}" alt="${spot.spot_name}" loading="lazy">`
+          : `<div class="spot-image-placeholder">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+              <span>旅途中上傳照片</span>
+            </div>`}
+        ${spot.tag?`<span class="spot-tag">${spot.tag}</span>`:''}
+      </div>
+      <div class="spot-body">
+        <div class="spot-meta">
+          ${spot.time?`<span class="spot-time">${spot.time}</span>`:''}
+          ${hasCoords?`<span class="gps-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> GPS</span>`:''}
+        </div>
+        <a class="spot-name" href="${mapsLink}" target="_blank" rel="noopener">${spot.spot_name} ↗</a>
+        <p class="spot-note">${spot.note||''}</p>
+      </div>
+      <div class="spot-footer">
+        <a class="map-btn" href="${mapsLink}" target="_blank" rel="noopener">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          Google Maps 查看
+        </a>
+        ${embedUrl?`<button class="map-btn" onclick="toggleEmbed('${uid}')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+          內嵌地圖
+        </button>`:''}
+      </div>
+      ${embedUrl?`<div class="map-embed-wrap" id="embed-${uid}">
+        <iframe src="${embedUrl}" allowfullscreen loading="lazy"></iframe>
+      </div>`:''}
+    </div>
+  </div>`;
+}
+
+function addBtn(dayNum) {
+  return `<button class="add-spot-btn" onclick="openModal(${dayNum})">
+    <span class="plus-circle">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </span>
+    新增 Day ${dayNum} 的行程紀錄
+  </button>`;
+}
+
+function renderDaySection(dayNum, spots) {
+  const dateLabel = spots[0]?.date||DAY_DATES[dayNum]||'';
+  const cards = spots.map(renderSpotCard).join('');
+  return `<section class="day-section" id="day-${dayNum}" data-day="${dayNum}">
+    <div class="day-header">
+      <div class="day-number">0${dayNum}</div>
+      <div class="day-info">
+        <div class="day-label">Day ${dayNum}</div>
+        <div class="day-date-label">${dateLabel.toUpperCase()}</div>
+      </div>
+    </div>
+    <div class="timeline" id="timeline-${dayNum}">${cards}${addBtn(dayNum)}</div>
+  </section>`;
+}
+
+function renderTabs(nums) {
+  const dm={1:'5/7',2:'5/8',3:'5/9',4:'5/10',5:'5/11',6:'5/12',7:'5/13'};
+  document.getElementById('day-tabs').innerHTML = nums.map(d=>
+    `<button class="day-tab" data-day="${d}" onclick="scrollToDay(${d})">Day ${d} <span style="opacity:.5;font-size:.65rem;margin-left:4px">${dm[d]||''}</span></button>`
+  ).join('');
+}
+
+function reRenderDay(dayNum) {
+  const section = document.getElementById('day-'+dayNum);
+  if (!section) return;
+  const tl = document.getElementById('timeline-'+dayNum);
+  const byDay = groupByDay(allData());
+  const spots = byDay[dayNum]||[];
+  const cards = spots.map(renderSpotCard).join('');
+  tl.innerHTML = cards + addBtn(dayNum);
+  section.classList.add('visible');
+  tl.querySelectorAll('.spot-card').forEach((c,i)=>setTimeout(()=>c.classList.add('visible'),i*80));
+}
+
+function toggleEmbed(uid) {
+  const el = document.getElementById('embed-'+uid);
+  if (el) el.classList.toggle('open');
+}
+
+function showError(msg) { const el=document.getElementById('error-msg'); el.innerHTML=msg; el.style.display='block'; }
+
+// ═══════════════════════════════════════
+// Observers
+// ═══════════════════════════════════════
+function initObserver() {
+  const io=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        if (e.target.classList.contains('day-section'))
+          e.target.querySelectorAll('.spot-card').forEach((c,i)=>setTimeout(()=>c.classList.add('visible'),i*100));
+        io.unobserve(e.target);
+      }
+    });
+  },{threshold:.08,rootMargin:'0px 0px -60px 0px'});
+  document.querySelectorAll('.day-section').forEach(el=>io.observe(el));
+}
+
+function initScrollSpy() {
+  const io=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{
+      if (e.isIntersecting) {
+        const day=e.target.dataset.day;
+        document.querySelectorAll('.day-tab').forEach(t=>t.classList.toggle('active',t.dataset.day===day));
+      }
+    });
+  },{threshold:.35});
+  document.querySelectorAll('.day-section').forEach(el=>io.observe(el));
+}
+
+function scrollToDay(day) {
+  const el=document.getElementById('day-'+day);
+  if (el) el.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ═══════════════════════════════════════
+// Modal
+// ═══════════════════════════════════════
+const overlay = document.getElementById('modal-overlay');
+const fab = document.getElementById('fab-btn');
+
+function openModal(day) {
+  if (day) document.getElementById('f-day').value=String(day);
+  const now=new Date();
+  document.getElementById('f-time').value=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  overlay.classList.add('open');
+  fab.classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+function closeModal() {
+  overlay.classList.remove('open');
+  fab.classList.remove('open');
+  document.body.style.overflow='';
+}
+
+fab.addEventListener('click', ()=>overlay.classList.contains('open')?closeModal():openModal(null));
+document.getElementById('modal-close').addEventListener('click', closeModal);
+overlay.addEventListener('click', e=>{ if(e.target===overlay) closeModal(); });
+
+// Tag chips
+document.querySelectorAll('.tag-chip').forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    if (_selectedTag===chip.dataset.tag) {
+      _selectedTag=''; chip.classList.remove('active');
+    } else {
+      document.querySelectorAll('.tag-chip').forEach(c=>c.classList.remove('active'));
+      _selectedTag=chip.dataset.tag; chip.classList.add('active');
+    }
+  });
+});
+
+// Image file preview
+document.getElementById('f-image-file').addEventListener('change', e=>{
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const prev=document.getElementById('img-preview');
+    prev.src=ev.target.result; prev.style.display='block';
+    document.getElementById('f-image-url').value='';
+    document.querySelector('.img-drop p').style.display='none';
+  };
+  reader.readAsDataURL(file);
+});
+
+// ═══════════════════════════════════════
+// GPS
+// ═══════════════════════════════════════
+function resetGPS() {
+  _gpsLat=''; _gpsLng='';
+  document.getElementById('gps-status').textContent='點擊按鈕取得你目前的 GPS 位置';
+  document.getElementById('gps-status').className='gps-status-text';
+  document.getElementById('gps-coords').style.display='none';
+  document.getElementById('gps-map-mini').classList.remove('visible');
+  const btn=document.getElementById('gps-btn');
+  btn.disabled=false; btn.textContent=''; btn.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg> 定位我的位置';
+}
+
+document.getElementById('gps-btn').addEventListener('click', ()=>{
+  if (!navigator.geolocation) {
+    document.getElementById('gps-status').textContent='此瀏覽器不支援 GPS 定位';
+    document.getElementById('gps-status').className='gps-status-text error';
+    return;
+  }
+  const btn=document.getElementById('gps-btn');
+  btn.disabled=true;
+  document.getElementById('gps-status').textContent='定位中，請稍候...';
+  document.getElementById('gps-status').className='gps-status-text loading';
+
+  navigator.geolocation.getCurrentPosition(
+    pos=>{
+      _gpsLat=pos.coords.latitude.toFixed(6);
+      _gpsLng=pos.coords.longitude.toFixed(6);
+      document.getElementById('gps-status').textContent='✓ 位置已取得';
+      document.getElementById('gps-status').className='gps-status-text';
+      btn.disabled=false;
+      btn.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg> 重新定位';
+
+      const coordsEl=document.getElementById('gps-coords');
+      coordsEl.textContent=`${_gpsLat}, ${_gpsLng}`;
+      coordsEl.style.display='block';
+
+      document.getElementById('gps-iframe').src=`https://maps.google.com/maps?q=${_gpsLat},${_gpsLng}&z=16&output=embed`;
+      document.getElementById('gps-map-mini').classList.add('visible');
+    },
+    err=>{
+      const msgs={1:'請允許瀏覽器存取位置（設定 > 隱私權）',2:'無法取得位置信號，請到室外再試',3:'定位逾時，請重試'};
+      document.getElementById('gps-status').textContent=msgs[err.code]||'定位失敗';
+      document.getElementById('gps-status').className='gps-status-text error';
+      btn.disabled=false;
+    },
+    {enableHighAccuracy:true,timeout:14000,maximumAge:0}
+  );
+});
+
+// ═══════════════════════════════════════
+// Submit
+// ═══════════════════════════════════════
+document.getElementById('submit-btn').addEventListener('click', ()=>{
+  const name=document.getElementById('f-name').value.trim();
+  if (!name) { showToast('請輸入景點名稱'); return; }
+
+  const dayNum=parseInt(document.getElementById('f-day').value);
+  const prev=document.getElementById('img-preview');
+  const imageUrl=(prev.style.display!=='none'&&prev.src&&prev.src!==window.location.href)
+    ? prev.src
+    : document.getElementById('f-image-url').value.trim();
+
+  const entry={
+    day: dayNum,
+    date: DAY_DATES[dayNum]||'',
+    time: document.getElementById('f-time').value,
+    spot_name: name,
+    note: document.getElementById('f-note').value.trim(),
+    image_url: imageUrl,
+    maps_url: _gpsLat&&_gpsLng ? `https://maps.google.com/?q=${_gpsLat},${_gpsLng}` : `https://maps.google.com/?q=${encodeURIComponent(name+' Tokyo')}`,
+    tag: _selectedTag,
+    featured: document.getElementById('f-featured').checked,
+    lat: _gpsLat,
+    lng: _gpsLng,
+  };
+
+  _runtimeEntries.push(entry);
+  reRenderDay(dayNum);
+  closeModal();
+  showToast('✦ 已新增：'+name);
+  resetForm();
+  setTimeout(()=>scrollToDay(dayNum), 300);
+});
+
+function resetForm() {
+  ['f-name','f-note','f-image-url'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-featured').checked=false;
+  const prev=document.getElementById('img-preview'); prev.src=''; prev.style.display='none';
+  document.querySelector('.img-drop p').style.display='';
+  _selectedTag='';
+  document.querySelectorAll('.tag-chip').forEach(c=>c.classList.remove('active'));
+  resetGPS();
+}
+
+// ═══════════════════════════════════════
+// Toast
+// ═══════════════════════════════════════
+let _toastTimer;
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer=setTimeout(()=>t.classList.remove('show'),2600);
+}
+
+// ═══════════════════════════════════════
+// Petals
+// ═══════════════════════════════════════
+function createPetals() {
+  const hero=document.querySelector('.hero');
+  for (let i=0;i<18;i++) {
+    const p=document.createElement('div'); p.className='petal';
+    p.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*-20}%;animation-duration:${5+Math.random()*8}s;animation-delay:${Math.random()*6}s;`;
+    hero.appendChild(p);
+  }
+}
+
+// ═══════════════════════════════════════
+// Boot
+// ═══════════════════════════════════════
+(async()=>{
+  createPetals();
+  const data=await loadData();
+  _baseData=data;
+  document.getElementById('loading').remove();
+
+  const byDay=groupByDay(allData());
+  const dayNums=Object.keys(byDay).map(Number).sort((a,b)=>a-b);
+  renderTabs(dayNums);
+  document.getElementById('timeline-root').innerHTML=dayNums.map(d=>renderDaySection(d,byDay[d])).join('');
+  initObserver();
+  initScrollSpy();
+})();
+</script>
+</body>
+</html>
